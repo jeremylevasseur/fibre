@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.media.Image;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText editText;
     private ImageView micButton;
 
-    RelativeLayout voiceRelativeLayout, graphRelativeLayout, tableRelativeLayout;
+    RelativeLayout voiceRelativeLayout, graphRelativeLayout, tableRelativeLayout, dataRelativeLayout;
 
     private TextView textView;
 
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
     private static ProgressDialog pd2;
 
     String createNewJobApiURL = "http://192.168.1.27:8081/api/main/v1/create_job";
+    String getAllMeasurementDataApiURL = "http://192.168.1.27:8081/api/main/v1/get_measurement_data";
 
     // HARDCODED JOB ID (MUST CHANGE)
     int jobId = 0;
@@ -109,6 +111,9 @@ public class MainActivity extends AppCompatActivity {
     ImageView mImageView;
 
     TableLayout tableLayout;
+
+    TextView jsonDataTV;
+    String jsonDataFormatted;
 
     int i, j, k;
 
@@ -147,8 +152,11 @@ public class MainActivity extends AppCompatActivity {
         voiceRelativeLayout = (RelativeLayout) findViewById(R.id.voice_relative_layout);
         graphRelativeLayout = (RelativeLayout) findViewById(R.id.graph_relative_layout);
         tableRelativeLayout = (RelativeLayout) findViewById(R.id.table_relative_layout);
+        dataRelativeLayout = (RelativeLayout) findViewById(R.id.data_relative_layout);
 
         tableLayout = (TableLayout) findViewById(R.id.table_layout);
+
+        jsonDataTV = (TextView) findViewById(R.id.json_data_textview);
 
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override
@@ -193,44 +201,80 @@ public class MainActivity extends AppCompatActivity {
 
                     graphRelativeLayout.setVisibility(View.GONE);
                     tableRelativeLayout.setVisibility(View.VISIBLE);
+                    dataRelativeLayout.setVisibility(View.GONE);
 
                     if (numberOfMeasurements == 0) {
                         Toast.makeText(MainActivity.this, "Currently no measurement data.", Toast.LENGTH_SHORT).show();
                     } else {
 
                         if (tableGenerated == 0) {
+
+                            TableRow firstRow = new TableRow(MainActivity.this);
+                            TableRow.LayoutParams firstTableRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
+                            firstTableRowParams.setMargins(100, 0, 100, 0);
+                            firstRow.setLayoutParams(firstTableRowParams);
+                            firstRow.setGravity(Gravity.CENTER_HORIZONTAL);
+
+                            View firstVerticalLineView = new View(MainActivity.this);
+                            firstVerticalLineView.setLayoutParams(new TableRow.LayoutParams(2, TableRow.LayoutParams.MATCH_PARENT));
+                            firstVerticalLineView.setBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.black));
+
+                            TextView measurementNumberHeaderTV = new TextView(MainActivity.this);
+                            TextView measurementHeaderTV = new TextView(MainActivity.this);
+
+                            measurementNumberHeaderTV.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
+                            measurementNumberHeaderTV.setTypeface(Typeface.DEFAULT_BOLD);
+                            measurementNumberHeaderTV.setTextSize(20);
+
+                            measurementHeaderTV.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
+                            measurementHeaderTV.setTypeface(Typeface.DEFAULT_BOLD);
+                            measurementHeaderTV.setTextSize(20);
+
+                            measurementNumberHeaderTV.setGravity(Gravity.CENTER_HORIZONTAL);
+                            measurementHeaderTV.setGravity(Gravity.CENTER_HORIZONTAL);
+
+                            measurementNumberHeaderTV.setText("Measurement #");
+                            measurementHeaderTV.setText("Measurement Value");
+
+                            firstRow.addView(measurementNumberHeaderTV);
+                            firstRow.addView(firstVerticalLineView);
+                            firstRow.addView(measurementHeaderTV);
+
+                            tableLayout.addView(firstRow, 0);
+
                             for (i = 0; i < numberOfMeasurements; i++) {
                                 TableRow row = new TableRow(MainActivity.this);
                                 TableRow.LayoutParams tableRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-                                tableRowParams.setMargins(100, 20, 100, 0);
-                                tableRowParams.gravity = Gravity.CENTER_HORIZONTAL;
-
+                                tableRowParams.setMargins(100, 0, 100, 0);
                                 row.setLayoutParams(tableRowParams);
+                                row.setGravity(Gravity.CENTER_HORIZONTAL);
+
+                                View verticalLineView = new View(MainActivity.this);
+                                verticalLineView.setLayoutParams(new TableRow.LayoutParams(2, TableRow.LayoutParams.MATCH_PARENT));
+                                verticalLineView.setBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.black));
 
                                 TextView measurementNumberTV = new TextView(MainActivity.this);
                                 TextView measurementTV = new TextView(MainActivity.this);
 
                                 measurementNumberTV.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
                                 measurementNumberTV.setTypeface(Typeface.DEFAULT_BOLD);
+                                measurementNumberTV.setTextSize(20);
 
                                 measurementTV.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
                                 measurementTV.setTypeface(Typeface.DEFAULT_BOLD);
+                                measurementTV.setTextSize(20);
 
                                 measurementNumberTV.setGravity(Gravity.CENTER_HORIZONTAL);
                                 measurementTV.setGravity(Gravity.CENTER_HORIZONTAL);
-
-//                                measurementNumberTV.setLayoutParams(new TableLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT, 1f));
-//                                measurementTV.setLayoutParams(new TableLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT, 1f));
 
                                 measurementNumberTV.setText(Integer.toString(i + 1));
                                 measurementTV.setText(measurementDataList.get(i));
 
                                 row.addView(measurementNumberTV);
+                                row.addView(verticalLineView);
                                 row.addView(measurementTV);
 
-                                tableLayout.addView(row, i);
-
-                                Log.e("Feb1", Integer.toString(i));
+                                tableLayout.addView(row, i + 1);
 
                             }
 
@@ -246,11 +290,21 @@ public class MainActivity extends AppCompatActivity {
 //                    voiceRelativeLayout.setVisibility(View.VISIBLE);
                     graphRelativeLayout.setVisibility(View.VISIBLE);
                     tableRelativeLayout.setVisibility(View.GONE);
+                    dataRelativeLayout.setVisibility(View.GONE);
+
                 }
 
                 if(data.get(0).contentEquals("show me all my data")) {
 
                     //jump to url with all data
+                    voiceRelativeLayout.setVisibility(View.VISIBLE);
+                    graphRelativeLayout.setVisibility(View.GONE);
+                    tableRelativeLayout.setVisibility(View.GONE);
+                    dataRelativeLayout.setVisibility(View.VISIBLE);
+
+                    jsonDataTV.setText("Loading...");
+
+                    new JsonTask2().execute(getAllMeasurementDataApiURL);
 
                 }
 
@@ -259,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
                     voiceRelativeLayout.setVisibility(View.VISIBLE);
                     graphRelativeLayout.setVisibility(View.GONE);
                     tableRelativeLayout.setVisibility(View.GONE);
+                    dataRelativeLayout.setVisibility(View.GONE);
 
                 }
 
@@ -485,6 +540,87 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private class JsonTask2 extends AsyncTask<String, String, String> {
+
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pd = new ProgressDialog(MainActivity.this);
+            pd.setMessage("Please wait");
+            pd.setCancelable(false);
+            pd.show();
+        }
+
+        protected String doInBackground(String... params) {
+
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
+
+            try {
+                URL url = null;
+                try {
+                    url = new URL(params[0]);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.connect();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                InputStream stream = connection.getInputStream();
+
+                reader = new BufferedReader(new InputStreamReader(stream));
+
+                StringBuffer buffer = new StringBuffer();
+                String line = "";
+
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line+"\n");
+                    Log.d("Response: ", "> " + line);   //here u ll get whole response...... :-)
+                }
+
+                return buffer.toString();
+
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if (pd.isShowing()){
+                pd.dismiss();
+            }
+
+            jsonDataFormatted = formatString(result);
+
+            jsonDataTV.setText(jsonDataFormatted);
+
+            removeSimpleProgressDialog();  //will remove progress dialog
+
+        }
+    }
+
     public static void removeSimpleProgressDialog() {
         try {
             if (pd != null) {
@@ -628,5 +764,44 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    public void openWebURL( String inURL ) {
+        Intent browse = new Intent( Intent.ACTION_VIEW , Uri.parse( inURL ) );
+
+        startActivity( browse );
+    }
+
+    public static String formatString(String text){
+
+        StringBuilder json = new StringBuilder();
+        String indentString = "";
+
+        for (int i = 0; i < text.length(); i++) {
+            char letter = text.charAt(i);
+            switch (letter) {
+                case '{':
+                case '[':
+                    json.append("\n" + indentString + letter + "\n");
+                    indentString = indentString + "\t";
+                    json.append(indentString);
+                    break;
+                case '}':
+                case ']':
+                    indentString = indentString.replaceFirst("\t", "");
+                    json.append("\n" + indentString + letter);
+                    break;
+                case ',':
+                    json.append(letter + "\n" + indentString);
+                    break;
+
+                default:
+                    json.append(letter);
+                    break;
+            }
+        }
+
+        return json.toString();
+    }
+
 
 }
