@@ -3,12 +3,16 @@ package com.example.texttospeech;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Typeface;
 import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
+import android.view.Gravity;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -68,6 +72,7 @@ import com.bumptech.glide.Glide;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -95,9 +100,17 @@ public class MainActivity extends AppCompatActivity {
     int jobId = 0;
     int measurementId = 0;
     String graphPictureLocation = "";
+    String measurementDataString = "";
+
+    int tableGenerated = 0;
+    ArrayList<String> measurementDataList;
+    int numberOfMeasurements = 0;
 
     ImageView mImageView;
 
+    TableLayout tableLayout;
+
+    int i, j, k;
 
     //Bluetooth connection to raspy pi----------------------------------------------
     /*BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -133,6 +146,9 @@ public class MainActivity extends AppCompatActivity {
 
         voiceRelativeLayout = (RelativeLayout) findViewById(R.id.voice_relative_layout);
         graphRelativeLayout = (RelativeLayout) findViewById(R.id.graph_relative_layout);
+        tableRelativeLayout = (RelativeLayout) findViewById(R.id.table_relative_layout);
+
+        tableLayout = (TableLayout) findViewById(R.id.table_layout);
 
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override
@@ -175,15 +191,59 @@ public class MainActivity extends AppCompatActivity {
 
                 if(data.get(0).contentEquals("show me a table")) {
 
-                    voiceRelativeLayout.setVisibility(View.GONE);
                     graphRelativeLayout.setVisibility(View.GONE);
                     tableRelativeLayout.setVisibility(View.VISIBLE);
+
+                    if (numberOfMeasurements == 0) {
+                        Toast.makeText(MainActivity.this, "Currently no measurement data.", Toast.LENGTH_SHORT).show();
+                    } else {
+
+                        if (tableGenerated == 0) {
+                            for (i = 0; i < numberOfMeasurements; i++) {
+                                TableRow row = new TableRow(MainActivity.this);
+                                TableRow.LayoutParams tableRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
+                                tableRowParams.setMargins(100, 20, 100, 0);
+                                tableRowParams.gravity = Gravity.CENTER_HORIZONTAL;
+
+                                row.setLayoutParams(tableRowParams);
+
+                                TextView measurementNumberTV = new TextView(MainActivity.this);
+                                TextView measurementTV = new TextView(MainActivity.this);
+
+                                measurementNumberTV.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
+                                measurementNumberTV.setTypeface(Typeface.DEFAULT_BOLD);
+
+                                measurementTV.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
+                                measurementTV.setTypeface(Typeface.DEFAULT_BOLD);
+
+                                measurementNumberTV.setGravity(Gravity.CENTER_HORIZONTAL);
+                                measurementTV.setGravity(Gravity.CENTER_HORIZONTAL);
+
+//                                measurementNumberTV.setLayoutParams(new TableLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT, 1f));
+//                                measurementTV.setLayoutParams(new TableLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+                                measurementNumberTV.setText(Integer.toString(i + 1));
+                                measurementTV.setText(measurementDataList.get(i));
+
+                                row.addView(measurementNumberTV);
+                                row.addView(measurementTV);
+
+                                tableLayout.addView(row, i);
+
+                                Log.e("Feb1", Integer.toString(i));
+
+                            }
+
+                            tableGenerated = 1;
+                        }
+                    }
+
 
                 }
 
                 if(data.get(0).contentEquals("show me a graph")) {
 
-                    voiceRelativeLayout.setVisibility(View.GONE);
+//                    voiceRelativeLayout.setVisibility(View.VISIBLE);
                     graphRelativeLayout.setVisibility(View.VISIBLE);
                     tableRelativeLayout.setVisibility(View.GONE);
                 }
@@ -227,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
                                     time=0;
                                     min=min +1;
                                 }
-                                textView.setText("Recording Time: "+ min+"m, "+time+"s");
+                                textView.setText("Recording Time: "+ min+"m:"+time+"s");
                                 time = time + 1;
                             }
                         }
@@ -531,7 +591,13 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<List<GetMeasurementDataByIdPostResponse>> call, Response<List<GetMeasurementDataByIdPostResponse>> response) {
                 if(response.isSuccessful()) {
                     graphPictureLocation = response.body().get(0).getGraphPictureLocation();
+                    measurementDataString = response.body().get(0).getMeasurement();
+                    measurementDataList = new ArrayList<>(Arrays.asList(measurementDataString.split(",")));
+
+                    numberOfMeasurements = measurementDataList.size();
+
                     Log.e("LINK", graphPictureLocation);
+                    Log.e("DATA", measurementDataString);
 
                     Glide.with(MainActivity.this).load(graphPictureLocation).placeholder(R.drawable.image_progress).into(mImageView);
 
