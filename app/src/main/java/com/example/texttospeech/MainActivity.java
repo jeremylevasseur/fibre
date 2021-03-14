@@ -117,18 +117,6 @@ public class MainActivity extends AppCompatActivity {
 
     int i, j, k;
 
-    //Bluetooth connection to raspy pi----------------------------------------------
-    /*BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    BluetoothSocket mmSocket;
-    BluetoothDevice mmDevice = null;
-
-    if(!mBluetoothAdapter.isEnabled())
-    {
-        Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        startActivityForResult(enableBluetooth, 0);
-    }*/
-    //----------------------------------------------------------------------------------
-
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -202,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
                     graphRelativeLayout.setVisibility(View.GONE);
                     tableRelativeLayout.setVisibility(View.VISIBLE);
                     dataRelativeLayout.setVisibility(View.GONE);
+                    textView.setVisibility(View.GONE);
 
                     if (numberOfMeasurements == 0) {
                         Toast.makeText(MainActivity.this, "Currently no measurement data.", Toast.LENGTH_SHORT).show();
@@ -291,6 +280,7 @@ public class MainActivity extends AppCompatActivity {
                     graphRelativeLayout.setVisibility(View.VISIBLE);
                     tableRelativeLayout.setVisibility(View.GONE);
                     dataRelativeLayout.setVisibility(View.GONE);
+                    textView.setVisibility(View.GONE);
 
                 }
 
@@ -301,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
                     graphRelativeLayout.setVisibility(View.GONE);
                     tableRelativeLayout.setVisibility(View.GONE);
                     dataRelativeLayout.setVisibility(View.VISIBLE);
+                    textView.setVisibility(View.GONE);
 
                     jsonDataTV.setText("Loading...");
 
@@ -314,17 +305,19 @@ public class MainActivity extends AppCompatActivity {
                     graphRelativeLayout.setVisibility(View.GONE);
                     tableRelativeLayout.setVisibility(View.GONE);
                     dataRelativeLayout.setVisibility(View.GONE);
+                    textView.setVisibility(View.VISIBLE);
 
                 }
 
                 if(data.get(0).contentEquals("start recording")) {
 
-                    //Raspy pi comms-----------------------------------------------
+                    textView.setVisibility(View.VISIBLE);
+
+
 
                     // TODO: Create a job within the database
                     new JsonTask().execute(createNewJobApiURL);
 
-                    //-------------------------------------------------------------
 
 
                     iscancel = false;
@@ -355,6 +348,8 @@ public class MainActivity extends AppCompatActivity {
 
 
                 if(data.get(0).contentEquals("stop recording")){
+
+                    textView.setVisibility(View.VISIBLE);
 
                     pd2 = new ProgressDialog(MainActivity.this);
                     pd2.setMessage("Please wait");
